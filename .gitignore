@@ -1,0 +1,67 @@
+# Prerequisites
+*.d
+
+# old text editor files
+*~
+
+# Qt created files
+moc*
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# QT
+uqFEM.pro.user
+.qmake.stash
+
+# application
+*.tmp
+*.out
+# *.json
+
+# build folder
+applications/out/build/*
+backend/applications/
+backend/build/
+
+# .DS_Store files on Mac
+*.DS_Store
+
+# .idea/ files from PyCharm IDE
+*.idea/
+
+# Pycache files
+*__pycache__
+
+build/
+Makefile
+*.pro.user
+
+
