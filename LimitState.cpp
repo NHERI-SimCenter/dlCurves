@@ -112,7 +112,7 @@ LimitState::inputFromJSON(QJsonObject &jsnObj) {
         QJsonArray dsArray = theValue.toArray();
         int numDS = dsArray.size();
         for (int i=0; i<numDS; i++) {
-            DamageState *theDS = new DamageState();
+            DamageState *theDS = new DamageState(this);
             QJsonObject theDS_Obj = dsArray[i].toObject();
             theDS->inputFromJSON(theDS_Obj);
             damageStates.append(theDS);

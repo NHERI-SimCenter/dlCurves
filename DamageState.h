@@ -47,6 +47,7 @@ class LimitState;
 
 class DamageState {
 public:
+    DamageState(LimitState *);
     virtual ~DamageState();
 
     // for now leave these public

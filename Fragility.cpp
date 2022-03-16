@@ -318,7 +318,7 @@ Fragility::parseDescription(QJsonObject &jsonObj,
             // loop over all damage states, create new damage state and append to limit state
             int numDS = 0;
             foreach (const QString &keyDS, keysDS) {
-                DamageState *newDS = new DamageState;
+	      DamageState *newDS = new DamageState(newLS);
                 QJsonObject damageState = limitStateObj[keyDS].toObject();
                 newDS->name = keyDS;
                 newDS->limitState = newLS;

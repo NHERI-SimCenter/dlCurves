@@ -229,6 +229,10 @@ FragilityDisplay::dsClicked(QTreeWidgetItem *current, int column) {
           damageStateRepair->setText(theDS->repairAction);
           damageStateDescription->setText(theDS->description);
           dsWeight->setText(QString::number(theDS->weight));
+	  LimitState *theLS = theDS->limitState;
+	  lsCurve->setText(theLS->curveDistribution);
+	  theta0->setText(QString::number(theLS->theta0));
+	  theta1->setText(QString::number(theLS->theta1));	  
       }
   } else {
       int indexLS = -1*(index + 1);

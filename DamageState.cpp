@@ -41,6 +41,11 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <QString>
 #include <QJsonObject>
 
+#include <LimitState.h>
+
+DamageState::DamageState(LimitState *theLS) {
+  limitState = theLS;
+}
 
 DamageState::~DamageState() {
     // no memory allocated
