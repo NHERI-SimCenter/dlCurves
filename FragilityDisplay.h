@@ -51,8 +51,8 @@ class DamageState;
 
 class QLineEdit;
 class QTextEdit;
-class QTreeWidget;
-class QTreeWidgetItem;
+class QTableWidget;
+class QGroupBox;
 class SimCenterGraphPlot;
 
 class FragilityDisplay : public QWidget
@@ -64,26 +64,22 @@ public:
     int display(Fragility *theFragility);
 
 public slots:
-    void dsClicked(QTreeWidgetItem *current, int column);
+    void lsTableRowClicked(int row, int column);  
 
 private:
     QLineEdit *index;
+    QLineEdit *blockSize;
+    QLineEdit *complete;
+  
     QTextEdit *description;
     QTextEdit *comments;
     QLineEdit *suggestdComponentBlackSize;
 
-    QLineEdit *dsWeight;
-    QTextEdit *damageStateRepair;
-    QTextEdit *damageStateDescription;
-
-    QLineEdit *lsCurve;
-    QLineEdit *theta0;
-    QLineEdit *theta1;
-
     //QLineEdit *limitStates;
     SimCenterGraphPlot *thePlot;
-    QTreeWidget *limitStates;
-    QList<DamageState*>dsList;
+    QTableWidget *theLimitStates;
+    QTableWidget *theDamageStates;
+    QGroupBox *damageBox;
     QList<LimitState*>lsList;
 };
 

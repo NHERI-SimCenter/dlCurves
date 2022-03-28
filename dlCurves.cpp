@@ -63,13 +63,11 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 dlCurves::dlCurves(QWidget *parent)
     : SimCenterWidget(parent)
 {
-
     QGridLayout *theLayout = new QGridLayout();
 
     QGroupBox *theFragilitySelection = new QGroupBox("Fragility Selection:");
     QGridLayout *theFragilitySelectionLayout = new QGridLayout();
     theFragilitySelection->setLayout(theFragilitySelectionLayout);
-
 
     theFragilitySelectionLayout->addWidget(new QLabel("Source"),0,0);
     QComboBox *fragilitySource = new QComboBox();
@@ -81,16 +79,16 @@ dlCurves::dlCurves(QWidget *parent)
 
     theFragilitySelectionLayout->addWidget(fragilitySource,0,1);
 
-
     theTree = new QTreeWidget();
     QStringList headerLabels;
     headerLabels.push_back(tr("Index"));
-    headerLabels.push_back(tr("Description"));
+    // headerLabels.push_back(tr("Description"));
     theTree->setColumnCount(headerLabels.count());
     theTree->setHeaderLabels(headerLabels);
-    theFragilitySelectionLayout->addWidget(theTree, 0,2, 3,1);
-
-    theLayout->addWidget(theFragilitySelection, 0,1);
+    theFragilitySelectionLayout->addWidget(theTree, 1,0, 1, 2);
+    
+    theLayout->addWidget(theFragilitySelection, 0, 0);
+    
     //  theLayout->addWidget(theFragilitySelection, 1, 0, 1, 3);
 
     // inputFile = new QLineEdit(this);
@@ -105,8 +103,9 @@ dlCurves::dlCurves(QWidget *parent)
     theFragilityBox->setLayout(theFragilityLayout);
     theDisplay = new FragilityDisplay();
     theFragilityLayout->addWidget(theDisplay,0,0);
+    
 
-    theLayout->addWidget(theFragilityBox, 2, 0, 1, 3);
+    theLayout->addWidget(theFragilityBox, 0,1);
 
     this->setLayout(theLayout);
     this->curvesChanged("P58");
@@ -168,7 +167,7 @@ dlCurves::addChild(QString name, QString description, QTreeWidgetItem *parent, i
 {
     QTreeWidgetItem *theItem = new QTreeWidgetItem(parent);
     theItem->setText(0, name);
-    theItem->setText(1, description);
+    //    theItem->setText(1, description);
 
     theItem->setData(0, Qt::UserRole, QVariant(count));
     parent->addChild(theItem);

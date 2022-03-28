@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     dlCurves *theWidget = new dlCurves();
     //theWidget->show();
     //  QLabel *theWidget = new QLabel("HEllo World");
-    MainWindowSimCenterPlainApp w("Fragility Viewer", theWidget);
+    MainWindowSimCenterPlainApp w("Performance Model Database", theWidget);
 
 
 #ifdef Q_OS_WIN

@@ -86,12 +86,15 @@ SimCenterGraphPlot::setLabels(QString x, QString y)
 {
     thePlot->xAxis->setLabel(x);
     thePlot->yAxis->setLabel(y);
+    qDebug() << "plot setting labels" << x << " " << y;
+     thePlot->replot();
 }
 
 void
 SimCenterGraphPlot::clear() {
     thePlot->clearGraphs();
     thePlot->clearPlottables();
+    thePlot->replot();
     numGraphs=0;
     atStart = true;
 }

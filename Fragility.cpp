@@ -64,6 +64,8 @@ Fragility::outputToJSON(QJsonObject &jsnObj) {
     jsnObj["id"]=id;
     jsnObj["demandType"]=demandType;
     jsnObj["demandUnit"]=demandUnit;
+    jsnObj["blockSize"]=blockSize;    
+    jsnObj["roundUpToInteger"]=roundToInt;    
     jsnObj["demandOffset"]=demandOffset;
     jsnObj["demandDirectional"]=demandDirectional;
     jsnObj["description"]=description;
@@ -86,7 +88,6 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
 
     bool result = true;
 
-    qDebug() << "Fragility::inputFromJSON";
     //
     // parse all objects, all same .. check there & do convesion if there .. otherwise return false
     //
@@ -107,6 +108,14 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         return false;
     }
 
+    if (jsnObj.contains("blockSize")) {
+        QJsonValue theValue = jsnObj["blockSize"];
+        blockSize = theValue.toString();
+    } else {
+        qDebug() << "LimitState::inputFromJson() - no blockSize";
+        return false;
+    }
+
     if (jsnObj.contains("demandUnit")) {
         QJsonValue theValue = jsnObj["demandUnit"];
         demandUnit = theValue.toString();
@@ -114,6 +123,14 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         qDebug() << "LimitState::inputFromJson() - no demandUnit";
         return false;
     }
+
+    if (jsnObj.contains("roundUpToInteger")) {
+        QJsonValue theValue = jsnObj["roundUpToInteger"];
+        roundToInt = theValue.toBool();
+    } else {
+        qDebug() << "LimitState::inputFromJson() - no rountToInt";
+        return false;
+    }    
 
     if (jsnObj.contains("demandOffset")) {
         QJsonValue theValue = jsnObj["demandOffset"];
@@ -149,7 +166,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
 
     if (jsnObj.contains("incomplete")) {
         QJsonValue theValue = jsnObj["incomplete"];
-        incomplete = theValue.toInt();
+        incomplete = theValue.toBool();
     } else {
         qDebug() << "LimitState::inputFromJson() - no incomplete";
         return false;
@@ -191,7 +208,15 @@ Fragility::read(QList<QByteArray> inputData, QJsonObject jsonObject)
     }
 
     id = QString(inputData[0]);
-    incomplete = inputData[1].toInt();
+    int incompleteInt = inputData[1].toInt();
+    if (incompleteInt == 0)
+      incomplete = false;
+    else {
+      incomplete = true;
+      qDebug() << "incomplete: " << id;
+    }
+    
+      
     demandType = QString(inputData[2]);
     demandUnit = QString(inputData[3]);
     demandOffset = inputData[4].toInt();
@@ -298,6 +323,27 @@ Fragility::parseDescription(QJsonObject &jsonObj,
         return -1;
     }
 
+    if (jsonObj.contains("SuggestedComponentBlockSize")) {
+        blockSize = jsonObj["SuggestedComponentBlockSize"].toString();
+    } else {
+        qDebug() << "No description in json object with key SuggestedComponentBlockSize";
+        return -1;
+    }
+
+    if (jsonObj.contains("RoundUpToIntegerQuantity")) {
+        roundToInt = jsonObj["RoundUpToIntegerQuantity"].toBool();
+    } else {
+        qDebug() << "No description in json object with key RoundToIntegerQuantity";
+        return -1;
+    }            
+    
+    if (jsonObj.contains("Comments")) {
+        comments = jsonObj["Comments"].toString();
+    } else {
+        qDebug() << "No description in json object with key Comments";
+        return -1;
+    }    
+
 
     if (jsonObj.contains("LimitStates")) {
         QJsonObject limitStatesObj = jsonObj["LimitStates"].toObject();
@@ -318,7 +364,7 @@ Fragility::parseDescription(QJsonObject &jsonObj,
             // loop over all damage states, create new damage state and append to limit state
             int numDS = 0;
             foreach (const QString &keyDS, keysDS) {
-	      DamageState *newDS = new DamageState(newLS);
+                DamageState *newDS = new DamageState(newLS);
                 QJsonObject damageState = limitStateObj[keyDS].toObject();
                 newDS->name = keyDS;
                 newDS->limitState = newLS;

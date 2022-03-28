@@ -71,15 +71,17 @@ public:
     // public for now
 
     QString id;
-    int incomplete;
+    bool incomplete;
     QString demandType;
     QString demandUnit;
     int demandOffset;
     int demandDirectional;
 
-    QJsonObject jsonData;
+  //    QJsonObject jsonData;
     QString description;
     QString comments;
+    QString blockSize;  
+    bool roundToInt;  
     QList<LimitState *> limitStates;
 };
 

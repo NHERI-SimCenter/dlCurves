@@ -43,6 +43,8 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "SimCenterGraphPlot.h"
 
 #include <QGridLayout>
+#include <QHBoxLayout>
+
 #include <QLineEdit>
 #include <QTextEdit>
 #include <QLabel>
@@ -53,195 +55,221 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <QTreeWidgetItem>
 #include <QGroupBox>
 #include <QFontMetrics>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QHeaderView>
+#include <QHBoxLayout>
 
 FragilityDisplay::FragilityDisplay(QWidget *parent)
-  : QWidget(parent)
+    : QWidget(parent)
 {
-  QGridLayout *theLayout = new QGridLayout();
-  theLayout->addWidget(new QLabel("#"),0,0);
+    QGridLayout *theLayout = new QGridLayout();
 
-  index = new QLineEdit();
-  theLayout->addWidget(index, 0,1);
+    QHBoxLayout *topLayout = new QHBoxLayout();
+    index = new QLineEdit();
+    blockSize = new QLineEdit();
+    complete = new QLineEdit();
+    complete->setStyleSheet("color: red;");
 
-  theLayout->addWidget(new QLabel("Description"),1,0);
-  description = new QTextEdit();
-  theLayout->addWidget(description, 1,1);
-  
-  theLayout->addWidget(new QLabel("Comments"),2,0);
-  comments = new QTextEdit();  
-  theLayout->addWidget(comments, 2,1, 1, 1);
+    topLayout->addWidget(index);
+    topLayout->addStretch();
+    topLayout->addWidget(blockSize);
+    topLayout->addStretch();
+    topLayout->addWidget(complete);
+    theLayout->addLayout(topLayout,0,0,1,3);
 
-  QFontMetrics m (comments->font()) ;
-  int rowHeight = m.lineSpacing() ;
+    //theLayout->addWidget(index,0,0);
+    //theLayout->addWidget(blockSize,0,1);
+    //theLayout->addWidget(complete,0,2);
+    
+    description = new QTextEdit();
 
-  description->setFixedHeight(5*rowHeight);
-  comments->setFixedHeight(5*rowHeight);
+    theLayout->addWidget(description, 1,0, 1, 3);
 
-  QGroupBox *theLD_Selection = new QGroupBox("Limit State/Damage State Selection");
-  QGridLayout *theLD_SelectionLayout = new QGridLayout();
-  theLD_Selection->setLayout(theLD_SelectionLayout);
-  
-  limitStates = new QTreeWidget();
-  limitStates->setHeaderHidden(true);
+    QFontMetrics m (description->font()) ;
+    int rowHeight = m.lineSpacing() ;
 
-  theLD_SelectionLayout->addWidget(limitStates,0,0);
-  theLayout->addWidget(theLD_Selection, 3,0,1,2);
+    description->setFixedHeight(10*rowHeight);
+    //  comments->setFixedHeight(5*rowHeight);
+
+    QGroupBox *theLD_Selection = new QGroupBox("Limit States");
+    QGridLayout *theLD_SelectionLayout = new QGridLayout();
+    theLD_Selection->setLayout(theLD_SelectionLayout);
+
+    theLimitStates = new QTableWidget(1,4);
+    theLimitStates->setHorizontalHeaderLabels(QString("LS;Family;Theta_0;Theta_1").split(";"));
+    theLimitStates->verticalHeader()->setVisible(false);
+    theLimitStates->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    theLimitStates->setSelectionBehavior(QAbstractItemView::SelectRows);
+    //theLimitStates->verticalHeader()->setStretchLastSection(true);
+    theDamageStates = new QTableWidget(1,3);
+    theDamageStates->setHorizontalHeaderLabels(QString("DS;Weight;Description").split(";"));
+    theDamageStates->verticalHeader()->setVisible(false);
+    theDamageStates->horizontalHeader()->setStretchLastSection(true);
+    //theDamageStates->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    theLD_SelectionLayout->addWidget(theLimitStates,0,0);
+    thePlot = new SimCenterGraphPlot("x_axis","y-axis");
+    theLD_SelectionLayout->addWidget(thePlot, 0,1);
+    theLD_SelectionLayout->setColumnStretch(0,1);
+    theLD_SelectionLayout->setColumnStretch(1,3);
+
+    theLayout->addWidget(theLD_Selection, 2,0,1,3);
+
+    //  lsLayout->addWidget(theLimitStates, 0, 0);
+
+    damageBox = new QGroupBox("Damage States:");
+    QHBoxLayout *damageStateLayout = new QHBoxLayout();
+    damageBox->setLayout(damageStateLayout);
 
 
-  thePlot = new SimCenterGraphPlot("x_axis","y-axis");
-  theLayout->addWidget(thePlot, 0,2,4,1);
+    damageStateLayout->addWidget(theDamageStates);
+    theLD_SelectionLayout->addWidget(damageBox, 1,0,1,2);
 
+    theLayout->setColumnStretch(1,1);
+    theLayout->setColumnStretch(2,1);
 
-  QGroupBox *lsBox = new QGroupBox("Limit State");
-  QGridLayout *lsLayout = new QGridLayout();
-  lsBox->setLayout(lsLayout);
-  lsLayout->addWidget(new QLabel("Curve Type"), 0, 0);
-  lsLayout->addWidget(new QLabel("theta0"), 0, 2);
-  lsLayout->addWidget(new QLabel("theta1"), 0, 4);
-  lsCurve = new QLineEdit();
-  theta0 = new QLineEdit();
-  theta1 = new QLineEdit();
-  lsLayout->addWidget(lsCurve, 0, 1);
-  lsLayout->addWidget(theta0, 0, 3);
-  lsLayout->addWidget(theta1, 0, 5);
+    this->setLayout(theLayout);
 
-
-  QGroupBox *damageBox = new QGroupBox("Damage State");
-  QGridLayout *damageStateLayout = new QGridLayout();
-  damageStateLayout->addWidget(new QLabel("weight"), 0, 0);
-  dsWeight = new QLineEdit();
-  damageStateLayout->addWidget(dsWeight, 0,1);
-
-  damageBox->setLayout(damageStateLayout);
-  damageStateRepair = new QTextEdit();
-  damageStateDescription = new QTextEdit();  
-  damageStateLayout->addWidget(new QLabel("Description"), 1,0);
-  damageStateLayout->addWidget(damageStateDescription, 1,1, 1, 2);
-  damageStateRepair->setFixedHeight(3*rowHeight);
-  damageStateDescription->setFixedHeight(3*rowHeight);    
-  damageStateLayout->addWidget(new QLabel("Repair Action"), 2,0);
-  damageStateLayout->addWidget(damageStateRepair, 2,1, 1, 2);
-  damageStateLayout->setColumnStretch(2,1);
-  lsLayout->addWidget(damageBox, 1, 0, 1, 7);
-  lsLayout->setColumnStretch(6,1);
-
-  theLayout->addWidget(lsBox,4,0,1,4);
-
-  theLayout->setColumnStretch(1,1);
-  theLayout->setColumnStretch(2,1);  
-  
-  this->setLayout(theLayout);
-
-  connect(limitStates,
-	  SIGNAL(itemClicked(QTreeWidgetItem*,int)),
-	  this,
-	  SLOT(dsClicked(QTreeWidgetItem*,int)));    
+    connect(theLimitStates, SIGNAL(cellPressed(int, int)), this, SLOT(lsTableRowClicked(int, int)));
 }
 
 
 int
 FragilityDisplay::display(Fragility *theFragility) {
-  
+
     index->setText(theFragility->id);
-    description->setText(theFragility->description);
-    comments->setText(theFragility->comments);
-    limitStates->clear();
+    QString blockSizeText = QString("Block Size: " ) + theFragility->blockSize;
+    if (theFragility->roundToInt == true)
+      blockSizeText += QString(" (Integer Quantity)");
 
-  dsList.clear();
-  lsList.clear();
+    if (theFragility->incomplete == false) {
+      complete->setText("");
+      // complete->setStyleSheet("color: green;");
+    } else {
+      complete->setText("Incomplete!");
+      // complete->setStyleSheet("color: red;");
+    }
+    
+    blockSize->setText(blockSizeText);
+    description->setText(theFragility->description + "\n\n" + theFragility->comments);
 
-  static int colors[4*3];
-  // https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=5
-  colors[0]=55;   colors[1]=126;    colors[2]=184;     // black
-  colors[3]=77;  colors[4]=175;   colors[5]=74;   // blue
-  colors[6]=152;   colors[7]=78;  colors[8]=163;    // green
-  colors[9]=225;  colors[10]=127;  colors[11]=0;  // purplish
-  
-  int numLS = 0;
-  int numDS = 0;
-  thePlot->clear();
+    theLimitStates->clear();
+    theLimitStates->setRowCount(0);
 
-  foreach (LimitState *lsItem, theFragility->limitStates ) { 
+    theDamageStates->clear();
+    theDamageStates->setRowCount(0);
 
-      // plot limitState
-      double la=0, ze=0, me=0, st=0;
-      la=lsItem->theta0;
-      ze=lsItem->theta1;
-      me = exp(log(la)+(pow(ze,2)/2));
-      st = sqrt(exp(2*log(la)+pow(ze,2))*(exp(pow(ze,2))-1));
+    thePlot->clear() ;
+    lsList.clear();
 
-      if (st > 0.0) {
-          double min = me - 5*st; // defined in x>0
-          if (min < 0)
-              min = 0;
-          double max = me + 5*st;
-          QVector<double> x(500);
-          QVector<double> y(500);
-          y[0]=0.;
-          double sum = 0.;
-          for (int i=0; i<500; i++) {
-              double xi = min + i*(max-min)/499;
-              x[i] = xi;
-              if (i != 0) y[i] = 1.0/(xi*ze*sqrt(2*3.141592))*exp( - pow((log(xi)-log(la))/ze,2)/2);
-              // y[i] = sum;
-          }
-          /*
-          for (int i=0; i<500; i++)
-              y[i] = y[i]/sum;
-           */
-          thePlot->addLine(x,y,2, colors[3*numDS], colors[3*numDS+1], colors[3*numDS+2], lsItem->name);
-          qDebug() << colors[3*numDS] << " " << colors[3*numDS+1] << " " << colors[3*numDS+2];
-      }
+    static int colors[4*3];
+    // https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=5
+    colors[0]=55;   colors[1]=126;    colors[2]=184;     // black
+    colors[3]=77;  colors[4]=175;   colors[5]=74;        // blue
+    colors[6]=152;   colors[7]=78;  colors[8]=163;       // green
+    colors[9]=225;  colors[10]=127;  colors[11]=0;       // purplish
 
+    int numLS = 0;
+    QString xAxisLabel = theFragility->demandType + QString(" (") + theFragility->demandUnit + QString(") [offset: ")
+            + QString::number(theFragility->demandOffset) + QString("]");
 
-      QTreeWidgetItem *theRoot= new QTreeWidgetItem(limitStates);
-      theRoot->setText(0, lsItem->name);
-      theRoot->setData(0, Qt::UserRole, QVariant(-1*(1+numLS)));
-      limitStates->addTopLevelItem(theRoot);
-      lsList.append(lsItem);
+    thePlot->setLabels(xAxisLabel, "yAxis");
 
-      foreach( DamageState *dsItem, lsItem->damageStates) {
-          QTreeWidgetItem *theChild= new QTreeWidgetItem(theRoot);
-          theChild->setText(0, dsItem->name);
-          theChild->setData(0, Qt::UserRole, QVariant(numDS));
-          theRoot->addChild(theChild);
-          dsList.append(dsItem);
-          numDS++;
-      }
-      numLS++;
-  }
-  damageStateRepair->setText("");
-  damageStateDescription->setText("");
-  dsWeight->setText("");
-  lsCurve->setText("");
-  theta0->setText("");
-  theta1->setText("");
+    foreach (LimitState *lsItem, theFragility->limitStates ) {
+
+        theLimitStates->insertRow(numLS);
+        lsList.append(lsItem);
+
+        QTableWidgetItem *name = new QTableWidgetItem;
+        name->setText(lsItem->name);
+        name->setTextAlignment( Qt::AlignCenter );
+        theLimitStates->setItem(numLS, 0, name);
+
+        QTableWidgetItem *family = new QTableWidgetItem;
+        family->setText(lsItem->curveDistribution);
+        family->setTextAlignment( Qt::AlignCenter );
+        theLimitStates->setItem(numLS, 1, family);
+
+        QTableWidgetItem *th0 = new QTableWidgetItem;
+        th0->setText(QString::number(lsItem->theta0));
+        th0->setTextAlignment( Qt::AlignCenter );
+        theLimitStates->setItem(numLS, 2, th0);
+
+        QTableWidgetItem *th1 = new QTableWidgetItem;
+        th1->setText(QString::number(lsItem->theta1));
+        th1->setTextAlignment( Qt::AlignCenter );
+        theLimitStates->setItem(numLS, 3, th1);
+
+        // plot limitState
+        double la=0, ze=0, me=0, st=0;
+        la=lsItem->theta0;
+        ze=lsItem->theta1;
+        if (la != NAN && ze != NAN) {
+
+            st = sqrt(exp(2*log(la)+pow(ze,2))*(exp(pow(ze,2))-1));
+
+            if (st > 0.0) {
+                double min = me - 5*st; // defined in x>0
+                if (min < 0)
+                    min = 0;
+                double max = me + 5*st;
+                QVector<double> x(500);
+                QVector<double> y(500);
+                y[0]=0.;
+                double sum = 0.;
+                for (int i=0; i<500; i++) {
+                    double xi = min + i*(max-min)/499;
+                    x[i] = xi;
+                    if (i != 0) y[i] = 1.0/(xi*ze*sqrt(2*3.141592))*exp( - pow((log(xi)-log(la))/ze,2)/2);
+                    // y[i] = sum;
+                }
+                /*
+               for (int i=0; i<500; i++)
+                  y[i] = y[i]/sum;
+               */
+                thePlot->addLine(x,y,2, colors[3*numLS], colors[3*numLS+1], colors[3*numLS+2], lsItem->name);
+                qDebug() << colors[3*numLS] << " " << colors[3*numLS+1] << " " << colors[3*numLS+2];
+            }
+        }
+
+        numLS++;
+    }
+    //theLimitStates->setCurrentCell(0,0);
+    //theLimitStates->cellPressed(0,0);
+    theLimitStates->selectRow(0);
 }
 
-void
-FragilityDisplay::dsClicked(QTreeWidgetItem *current, int column) {
 
-  QVariant intV = current->QTreeWidgetItem::data(0, Qt::UserRole);
-  int index = intV.toInt();
-  if (index >= 0)  {
-      DamageState *theDS = dsList.at(index);
-      if (theDS != 0) {
-          damageStateRepair->setText(theDS->repairAction);
-          damageStateDescription->setText(theDS->description);
-          dsWeight->setText(QString::number(theDS->weight));
-	  LimitState *theLS = theDS->limitState;
-	  lsCurve->setText(theLS->curveDistribution);
-	  theta0->setText(QString::number(theLS->theta0));
-	  theta1->setText(QString::number(theLS->theta1));	  
-      }
-  } else {
-      int indexLS = -1*(index + 1);
-      LimitState *theLS = lsList.at(indexLS);
-      lsCurve->setText(theLS->curveDistribution);
-      theta0->setText(QString::number(theLS->theta0));
-      theta1->setText(QString::number(theLS->theta1));
-      damageStateRepair->setText("");
-      damageStateDescription->setText("");
-      dsWeight->setText("");
-  }
+void
+FragilityDisplay::lsTableRowClicked(int row, int column)
+{
+
+    theDamageStates->clear();
+    theDamageStates->setRowCount(0);
+
+    int indexLS = row;
+    LimitState *theLS = lsList.at(indexLS);
+    int numDS = 0;
+
+    damageBox->setTitle("Damage States in " + theLS->name);
+
+    foreach( DamageState *dsItem, theLS->damageStates) {
+        theDamageStates->insertRow(numDS);
+
+        QTableWidgetItem *name = new QTableWidgetItem;
+        name->setText(dsItem->name);
+        name->setTextAlignment( Qt::AlignCenter );
+        theDamageStates->setItem(numDS, 0, name);
+
+        QTableWidgetItem *weight = new QTableWidgetItem;
+        weight->setText(QString::number(dsItem->weight));
+        weight->setTextAlignment( Qt::AlignCenter );
+        theDamageStates->setItem(numDS, 1, weight);
+
+        QTableWidgetItem *descr = new QTableWidgetItem;
+        descr->setText(dsItem->description);
+        theDamageStates->setItem(numDS, 2, descr);
+        numDS++;
+    }
 }
