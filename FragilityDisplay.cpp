@@ -176,6 +176,33 @@ FragilityDisplay::display(Fragility *theFragility) {
 
     thePlot->setLabels(xAxisLabel, "yAxis");
 
+    double max = 0;
+    double min = 0;
+
+    foreach (LimitState *lsItem, theFragility->limitStates ) {
+        double me =0, st=0;
+        if (lsItem->curveDistribution == "lognormal") {
+
+            me = lsItem->theta0;
+            st = me*lsItem->theta1;
+
+        } else if ( lsItem->curveDistribution == "normal") {
+
+            me = lsItem->theta0;
+            st = me*lsItem->theta1;
+
+        }
+        double minLS =0, maxLS=0;
+        if (st > 0.0) {
+            minLS = me - 5*st; // defined in x>0
+            if (minLS < 0)
+                minLS = 0;
+            maxLS = me + 5*st;
+        }
+        if (maxLS > max) max = maxLS;
+        if (minLS < min) min = minLS;
+    }
+
     foreach (LimitState *lsItem, theFragility->limitStates ) {
 
         theLimitStates->insertRow(numLS);
@@ -219,33 +246,32 @@ FragilityDisplay::display(Fragility *theFragility) {
                 st = me*lsItem->theta1;
 
             }
-            //st = sqrt(exp(2*log(la)+pow(ze,2))*(exp(pow(ze,2))-1));
-            //me = exp(la+(pow(ze,2)/2));
+
             if (st > 0.0) {
-                double min = me - 5*st; // defined in x>0
-                if (min < 0)
-                    min = 0;
-                double max = me + 5*st;
+
                 QVector<double> x(500);
                 QVector<double> y(500);
                 y[0]=0.;
                 double sum = 0.;
                 for (int i=0; i<500; i++) {
                     double xi = min + i*(max-min)/499;
+                    double val = 0.0;
                     x[i] = xi;
 
                     if (i != 0) {
                         if (lsItem->curveDistribution == "lognormal")
-                            y[i] = 1.0/(xi*ze*sqrt(2*3.141592))*exp( - pow((log(xi)-la)/ze,2)/2);
+                            val=  1.0/(xi*ze*sqrt(2*3.141592))*exp( - pow((log(xi)-la)/ze,2)/2);
                         else if (lsItem->curveDistribution == "normal")
-                            y[i] =1.0/(sqrt(2*3.1415926535)*st)*exp(-(0.5*(xi-me)*(xi-me)/(st*st)));
-                        sum+=y[i];
+                            val = 1.0/(sqrt(2*3.1415926535)*st)*exp(-(0.5*(xi-me)*(xi-me)/(st*st)));
+                        sum+=val;
+                        y[i] = sum;
                     }
                 }
-                /*
-               for (int i=0; i<500; i++)
-                  y[i] = y[i]/sum;
-               */
+
+                if (sum != 0.0)
+                    for (int i=0; i<500; i++)
+                        y[i] = y[i]/sum;
+
 
                 thePlot->addLine(x,y,2, colors[3*numLS], colors[3*numLS+1], colors[3*numLS+2], lsItem->name);
                 qDebug() << colors[3*numLS] << " " << colors[3*numLS+1] << " " << colors[3*numLS+2];

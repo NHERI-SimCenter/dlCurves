@@ -96,7 +96,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["id"];
         id = theValue.toString();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no id";
+        qDebug() << "Fragility::inputFromJson() - no id";
         return false;
     }
 
@@ -104,7 +104,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["demandType"];
         demandType = theValue.toString();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no demandType";
+        qDebug() << "Fragility::inputFromJson() - no demandType";
         return false;
     }
 
@@ -112,7 +112,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["blockSize"];
         blockSize = theValue.toString();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no blockSize";
+        qDebug() << "Fragility::inputFromJson() - no blockSize";
         return false;
     }
 
@@ -120,7 +120,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["demandUnit"];
         demandUnit = theValue.toString();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no demandUnit";
+        qDebug() << "Fragility::inputFromJson() - no demandUnit";
         return false;
     }
 
@@ -128,7 +128,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["roundUpToInteger"];
         roundToInt = theValue.toBool();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no rountToInt";
+        qDebug() << "Fragility::inputFromJson() - no roundUpToInteger";
         return false;
     }    
 
@@ -136,7 +136,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["demandOffset"];
         demandOffset = theValue.toInt();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no demandOffset";
+        qDebug() << "Fragility::inputFromJson() - no demandOffset";
         return false;
     }
 
@@ -144,7 +144,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["demandDirectional"];
         demandDirectional = theValue.toInt();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no demandDirectional";
+        qDebug() << "Fragility::inputFromJson() - no demandDirectional";
         return false;
     }
 
@@ -152,7 +152,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["description"];
         description = theValue.toString();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no description";
+        qDebug() << "Fragility:inputFromJson() - no description";
         return false;
     }
 
@@ -160,7 +160,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["comments"];
         comments = theValue.toString();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no comments";
+        qDebug() << "Fragility::inputFromJson() - no comments";
         return false;
     }
 
@@ -168,7 +168,7 @@ Fragility::inputFromJSON(QJsonObject &jsnObj) {
         QJsonValue theValue = jsnObj["incomplete"];
         incomplete = theValue.toBool();
     } else {
-        qDebug() << "LimitState::inputFromJson() - no incomplete";
+        qDebug() << "Fragility::inputFromJson() - no incomplete";
         return false;
     }
 
