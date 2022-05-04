@@ -136,7 +136,7 @@ dlCurves::inputFromJSON(QJsonObject &jsonObject) {
     if (jsonObject.contains("displayBreaks")) {
         QJsonValue theValue = jsonObject["displayBreaks"];
         QString string = theValue.toString();
-	breakPointsString = string;
+        breakPointsString = string;
         QStringList listPoints = string.split(",");
 
         for ( const auto& i : listPoints) {
@@ -153,7 +153,10 @@ dlCurves::inputFromJSON(QJsonObject &jsonObject) {
             theFragility->inputFromJSON(theObj);
             theFragilities.append(theFragility);
         }
-        this->createInterface(breakPoints);
+        if (breakPoints.size() != 0)
+            this->createInterface(breakPoints);
+        else
+            this->createInterface();
     } else {
         qDebug() << "dlCurves::inputFromJson() - no fragilities";
         return false;
@@ -208,6 +211,7 @@ dlCurves::createInterface(QVector<int> breakPoints) {
 
     Fragility *theFragility = theFragilities.at(0);
     QString index = theFragility->id;
+
     index.remove(QChar('.'), Qt::CaseInsensitive); // remove any dots .. not displayed
 
     // Two QVectors to hold current text and current treeItems
@@ -271,6 +275,124 @@ dlCurves::createInterface(QVector<int> breakPoints) {
     }
 }
 
+// method to find num characters between . characters
+void
+dlCurves::findBreakPoints(const QString &str, QVector<int> &breakPoints) {
+  int n = 0;
+  int loc = str.indexOf('.', n);
+  while (loc != -1) {
+    breakPoints.append(loc-n);
+    n = loc+1;
+    loc = str.indexOf(".", n);
+  }
+}
+
+void
+dlCurves::createInterface(void) {
+
+    if (theFragilities.size() == 0) {
+        qDebug() << "dlCurves::createInterface - no Fragilities!";
+        return;
+    }
+
+    // clear tree
+    theTree->clear();
+
+    Fragility *theFragility = theFragilities.at(0);
+    QString index = theFragility->id;
+
+    // find . breakpoints
+    QVector<int>breakPoints;
+    findBreakPoints(index, breakPoints);
+    if (breakPoints.size() == 0) { // add one if none
+        breakPoints.append(index.size());
+    }
+
+    index.remove(QChar('.'), Qt::CaseInsensitive); // remove any dots .. not displayed
+    
+    // Two QVectors to hold current text and current treeItems
+    QVector<QString> theCurrentTreeItemStrings;
+    QVector<QTreeWidgetItem *> theCurrentTreeItems;
+
+    // initialize the two vectors based on what is in the first fragility
+    int currentIndexStart = 0;
+    int numLevels = breakPoints.size();
+    for (int i=0; i<numLevels; i++) {
+        QString currentString = index.mid(currentIndexStart, breakPoints[i]);
+        theCurrentTreeItemStrings.append(currentString);
+        currentIndexStart = currentIndexStart + breakPoints[i];
+        if (i == 0) {
+            theCurrentTreeItems.append(addRoot(currentString,  QString("")));
+        } else {
+            theCurrentTreeItems.append(addChild(currentString,theCurrentTreeItems[i-1]));
+        }
+    }
+
+    //for (int i=0; i<numLevels; i++) qDebug() << theCurrentTreeItemStrings[i];
+
+    // use this index for fast search when displaying
+    int fragIndex = 0;
+
+    // add the first fragility 0 to tree
+    addChild(theFragility->id, theFragility->description, theCurrentTreeItems[numLevels-1], fragIndex);
+
+    // now add the rest of them
+    for (int i=1; i<theFragilities.size(); i++) {
+
+        Fragility *theFragility = theFragilities.at(i);
+        QString index = theFragility->id;
+
+        QVector<int>breakPointsCurrent;
+        findBreakPoints(index, breakPointsCurrent);
+
+        if (breakPointsCurrent.size() == 0) {
+            breakPointsCurrent.append(index.size());
+        }
+
+        if (breakPointsCurrent.size() != breakPoints.size()) {
+            qDebug() << "WARNING: diffent number of breaks index: " << index;
+        }
+
+        numLevels = breakPointsCurrent.size();
+
+        index.remove(QChar('.'), Qt::CaseInsensitive); // remove any dots .. not displayed
+
+        bool swapCurrent = false;
+        currentIndexStart = 0;
+
+        for (int i=0; i<numLevels; i++) {
+            QString currentString = index.mid(currentIndexStart, breakPointsCurrent[i]);
+            currentIndexStart = currentIndexStart + breakPointsCurrent[i];
+            if (numLevels > theCurrentTreeItemStrings.size()) {
+                theCurrentTreeItemStrings.append(currentString);
+                swapCurrent = true;
+            } else if (currentString != theCurrentTreeItemStrings[i])
+                swapCurrent = true;
+
+            if (swapCurrent == true) {
+                // qDebug() << "SWAP : " << i << " " << theCurrentTreeItemStrings[i] << " " << currentString << index;
+                theCurrentTreeItemStrings[i] = currentString;
+
+                if (i == 0) {
+                    theCurrentTreeItems[i] = addRoot(currentString,  QString(""));
+                } else {
+                    if (theCurrentTreeItems.size() < i+1)
+                        theCurrentTreeItems.append(addChild(currentString,theCurrentTreeItems[i-1]));
+                    else
+                        theCurrentTreeItems[i] = addChild(currentString,theCurrentTreeItems[i-1]);
+                }
+            }
+        }
+
+        // incr fragIndex & add
+        fragIndex++;
+        addChild(theFragility->id, theFragility->description, theCurrentTreeItems[numLevels-1], fragIndex);
+    }
+}
+
+
+
+
 void
 dlCurves::parseSimCenter(QString fileName) {
 
@@ -279,21 +401,23 @@ dlCurves::parseSimCenter(QString fileName) {
     QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
                                          tr("Break Points for indices:"), QLineEdit::Normal,
                                          "1,2,2", &ok);
+
     if (ok && !text.isEmpty()) {
-        qDebug() << text;
+        qDebug() << "breakPoints: " << text;
     } else {
-        qDebug() << "ERROR: need brak points to create a tree";
-        return;
+        qDebug() << "Using built in breakPoints";
     }
 
     breakPointsString = text;
     QVector<int> breakPoints;
-    QStringList listPoints = text.split(",");
 
-    for ( const auto& i : listPoints) {
-        breakPoints.append(i.toInt());
+    if (text.contains(',')) {
+        QStringList listPoints = text.split(",");
+
+        for ( const auto& i : listPoints) {
+            breakPoints.append(i.toInt());
+        }
     }
-
     theTree->clear();
     qDeleteAll(theFragilities);
     theFragilities.clear();
@@ -374,7 +498,10 @@ dlCurves::parseSimCenter(QString fileName) {
         theFragilities.append(newFragility);
     }
 
-    this->createInterface(breakPoints);
+    if (breakPoints.size() != 0)
+        this->createInterface(breakPoints);
+    else
+         this->createInterface();
 }
 
 

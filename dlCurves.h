@@ -66,6 +66,8 @@ public slots:
 
 private:
     void createInterface(QVector<int>breakPoints);
+    void createInterface(void);
+    void findBreakPoints(const QString &str, QVector<int> &breakPoints);
 
     void parseSimCenter(QString fileName);
     QTreeWidgetItem * addRoot(QString name, QString description);
