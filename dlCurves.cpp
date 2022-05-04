@@ -58,6 +58,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <QJsonArray>
 #include <QGroupBox>
 #include <QComboBox>
+#include <QInputDialog>
 #include <QtAlgorithms>
 
 dlCurves::dlCurves(QWidget *parent)
@@ -131,7 +132,17 @@ dlCurves::inputFromJSON(QJsonObject &jsonObject) {
     theFragilities.clear();
 
     theTree->clear();
+    QVector<int> breakPoints;
+    if (jsonObject.contains("displayBreaks")) {
+        QJsonValue theValue = jsonObject["displayBreaks"];
+        QString string = theValue.toString();
+	breakPointsString = string;
+        QStringList listPoints = string.split(",");
 
+        for ( const auto& i : listPoints) {
+            breakPoints.append(i.toInt());
+        }
+    }
     if (jsonObject.contains("fragilities")) {
         QJsonValue theValue = jsonObject["fragilities"];
         QJsonArray theArray = theValue.toArray();
@@ -142,7 +153,7 @@ dlCurves::inputFromJSON(QJsonObject &jsonObject) {
             theFragility->inputFromJSON(theObj);
             theFragilities.append(theFragility);
         }
-        this->createInterface();
+        this->createInterface(breakPoints);
     } else {
         qDebug() << "dlCurves::inputFromJson() - no fragilities";
         return false;
@@ -185,72 +196,105 @@ dlCurves::addChild(QString name, QTreeWidgetItem *parent, int count)
 }
 
 void
-dlCurves::createInterface(void) {
+dlCurves::createInterface(QVector<int> breakPoints) {
 
     if (theFragilities.size() == 0) {
         qDebug() << "dlCurves::createInterface - no Fragilities!";
         return;
     }
 
-    Fragility *theFragility = theFragilities.at(0);
-    QString index = theFragility->id;
-    QString currentFirst = index.left(1);
-    QString currentSecond = index.mid(1,2);
-    QString currentThird = index.mid(3,2);
-
-
-    // clear current tree, add first layers
-    // qDeleteAll(*theTree);
+    // clear tree
     theTree->clear();
 
-    QTreeWidgetItem *firstLevel  = addRoot(currentFirst,  QString(""));
-    QTreeWidgetItem *secondLevel = addChild(currentSecond,firstLevel);
-    QTreeWidgetItem *thirdLevel  = addChild(currentThird, secondLevel);
+    Fragility *theFragility = theFragilities.at(0);
+    QString index = theFragility->id;
+    index.remove(QChar('.'), Qt::CaseInsensitive); // remove any dots .. not displayed
+
+    // Two QVectors to hold current text and current treeItems
+    QVector<QString> theCurrentTreeItemStrings;
+    QVector<QTreeWidgetItem *> theCurrentTreeItems;
+
+    // initialize the two vectors based on what is in the first fragility
+    int currentIndexStart = 0;
+    int numLevels = breakPoints.size();
+    for (int i=0; i<numLevels; i++) {
+        QString currentString = index.mid(currentIndexStart, breakPoints[i]);
+        theCurrentTreeItemStrings.append(currentString);
+        currentIndexStart = currentIndexStart + breakPoints[i];
+        if (i == 0) {
+            theCurrentTreeItems.append(addRoot(currentString,  QString("")));
+        } else {
+            theCurrentTreeItems.append(addChild(currentString,theCurrentTreeItems[i-1]));
+        }
+    }
+
+    //for (int i=0; i<numLevels; i++) qDebug() << theCurrentTreeItemStrings[i];
 
     // use this index for fast search when displaying
     int fragIndex = 0;
 
-    // add the first ragility 0 to tree
-    addChild(theFragility->id, theFragility->description, thirdLevel, fragIndex);
+    // add the first fragility 0 to tree
+    addChild(theFragility->id, theFragility->description, theCurrentTreeItems[numLevels-1], fragIndex);
 
     // now add the rest of them
     for (int i=1; i<theFragilities.size(); i++) {
 
         Fragility *theFragility = theFragilities.at(i);
-        QString index = theFragility->id;
-        QString first = index.left(1);
-        QString second = index.mid(1,2);
-        QString third = index.mid(3,2);
 
-        // switch level depending on id
-        if (currentFirst != first) {
-            currentFirst = first;
-            currentSecond=second;
-            currentThird=third;
-            firstLevel  = addRoot(first,QString(""));
-            secondLevel = addChild(second,firstLevel);
-            thirdLevel  = addChild(third,secondLevel);
-        } else if (currentSecond != second) {
-            currentSecond = second;
-            currentThird=third;
-            secondLevel = addChild(second,firstLevel);
-            thirdLevel  = addChild(third,secondLevel);
-        } else if (currentThird != third) {
-            currentThird = third;
-            thirdLevel  = addChild(third,secondLevel);
+        QString index = theFragility->id;
+        index.remove(QChar('.'), Qt::CaseInsensitive); // remove any dots .. not displayed
+
+        bool swapCurrent = false;
+        currentIndexStart = 0;
+
+        for (int i=0; i<numLevels; i++) {
+            QString currentString = index.mid(currentIndexStart, breakPoints[i]);
+            currentIndexStart = currentIndexStart + breakPoints[i];
+            if (currentString != theCurrentTreeItemStrings[i])
+                swapCurrent = true;
+
+            if (swapCurrent == true) {
+                // qDebug() << "SWAP : " << i << " " << theCurrentTreeItemStrings[i] << " " << currentString << index;
+                theCurrentTreeItemStrings[i] = currentString;
+
+                if (i == 0) {
+                    theCurrentTreeItems[i] = addRoot(currentString,  QString(""));
+                } else {
+                    theCurrentTreeItems[i] = addChild(currentString,theCurrentTreeItems[i-1]);
+                }
+            }
         }
 
         // incr fragIndex & add
         fragIndex++;
-        addChild(theFragility->id, theFragility->description, thirdLevel, fragIndex);
+        addChild(theFragility->id, theFragility->description, theCurrentTreeItems[numLevels-1], fragIndex);
     }
 }
 
 void
 dlCurves::parseSimCenter(QString fileName) {
 
-    theTree->clear();
 
+   bool ok;
+    QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
+                                         tr("Break Points for indices:"), QLineEdit::Normal,
+                                         "1,2,2", &ok);
+    if (ok && !text.isEmpty()) {
+        qDebug() << text;
+    } else {
+        qDebug() << "ERROR: need brak points to create a tree";
+        return;
+    }
+
+    breakPointsString = text;
+    QVector<int> breakPoints;
+    QStringList listPoints = text.split(",");
+
+    for ( const auto& i : listPoints) {
+        breakPoints.append(i.toInt());
+    }
+
+    theTree->clear();
     qDeleteAll(theFragilities);
     theFragilities.clear();
 
@@ -264,21 +308,23 @@ dlCurves::parseSimCenter(QString fileName) {
         qDebug() << "could not open csv File: " << theCSV_Filename;
         return;
     }
+    
     QString theJSON_Filename = theCSV_Filename.replace(QString(".csv"), QString(".json"));
     QFile jsonFile(theJSON_Filename);
+    bool haveJSON = true;
+    QJsonObject jsonObj;
     if (!jsonFile.open(QFile::ReadOnly | QFile::Text)) {
-        //emit errorMessage(QString("Could Not Open File json file: ") + theJSON_Filename);
-        qDebug() << QString("Could Not Open File json file: ") << theJSON_Filename;
-        return;
-    }
+      haveJSON = false;    
+    } else {
 
-    QString val=jsonFile.readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
-
-    QJsonObject jsonObj = doc.object();
-    if (jsonObj.isEmpty()) {
+      QString val=jsonFile.readAll();
+      QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
+      
+      jsonObj = doc.object();
+      if (jsonObj.isEmpty()) {
         qDebug() << QString("Invalid json file: ") << theJSON_Filename << QString(" . Check the format");
         return;
+      }
     }
 
     //
@@ -296,17 +342,6 @@ dlCurves::parseSimCenter(QString fileName) {
     QList<QByteArray> wordList = line.split(',');
     QByteArray indices = wordList.first();
     QString index = QString(indices);
-    QByteArray currentFirst = indices.mid(0,1);
-    QByteArray currentSecond = indices.mid(1,2);
-    QByteArray currentThird = indices.mid(3,2);
-
-    // levels to keep track of: as indices change when parsing rest we update these
-    QTreeWidgetItem *firstLevel  = addRoot(QString(currentFirst),  QString(""));
-    QTreeWidgetItem *secondLevel = addChild(QString(currentSecond),firstLevel);
-    QTreeWidgetItem *thirdLevel  = addChild(QString(currentThird), secondLevel);
-
-    // use this index for fast search when displaying
-    int fragIndex = 0;
 
     // create new fragility & add
     Fragility *newFragility = new Fragility();
@@ -322,8 +357,6 @@ dlCurves::parseSimCenter(QString fileName) {
         return;
     }
 
-    // add text to tree
-    addChild(newFragility->id, newFragility->description, thirdLevel, fragIndex);
 
     // parse each line of file, create fragility and update tree as before
     QWidgetItem *current;
@@ -334,38 +367,14 @@ dlCurves::parseSimCenter(QString fileName) {
         QByteArray indices = wordList.first();
         QString index = QString(indices);
 
-        QByteArray first = indices.mid(0,1);
-        QByteArray second = indices.mid(1,2);
-        QByteArray third = indices.mid(3,2);
-
-
-        // switch level depending on id
-        if (currentFirst != first) {
-            currentFirst = first;
-            currentSecond=second;
-            currentThird=third;
-            firstLevel  = addRoot(QString(first),QString(""));
-            secondLevel = addChild(QString(second),firstLevel);
-            thirdLevel  = addChild(QString(third),secondLevel);
-        } else if (currentSecond != second) {
-            currentSecond = second;
-            currentThird=third;
-            secondLevel = addChild(QString(second),firstLevel);
-            thirdLevel  = addChild(QString(third),secondLevel);
-        } else if (currentThird != third) {
-            currentThird = third;
-            thirdLevel  = addChild(QString(third),secondLevel);
-        }
-        fragIndex++;
-
         Fragility *newFragility = new Fragility();
         if (jsonObj.contains(index))
             theFragilityDescription = jsonObj[index].toObject();
         newFragility->read(wordList, theFragilityDescription);
-
-        addChild(newFragility->id, newFragility->description, thirdLevel, fragIndex);
         theFragilities.append(newFragility);
     }
+
+    this->createInterface(breakPoints);
 }
 
 
@@ -427,6 +436,7 @@ dlCurves::curvesChanged(QString source) {
         }
     }
 }
+
 
 
 

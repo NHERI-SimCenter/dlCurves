@@ -222,7 +222,6 @@ Fragility::read(QList<QByteArray> inputData, QJsonObject jsonObject)
     demandOffset = inputData[4].toInt();
     demandDirectional = inputData[5].toInt();
 
-
     families.append(QString(inputData[6]));
     if (!inputData[7].isEmpty())
         theta0[0] = inputData[7].toDouble();
@@ -235,6 +234,7 @@ Fragility::read(QList<QByteArray> inputData, QJsonObject jsonObject)
         for (int j=0; j<weightsList.size(); j++) {
             weightL[j]=weightsList.at(j).toDouble();
         }
+        weightLengths[0] = weightsList.size();
     }
 
     if (!inputData[10].isEmpty()) {
@@ -250,6 +250,7 @@ Fragility::read(QList<QByteArray> inputData, QJsonObject jsonObject)
             for (int j=0; j<weightsList.size(); j++) {
                 weightL[j]=weightsList.at(j).toDouble();
             }
+             weightLengths[1] = weightsList.size();
         }
     }
 
@@ -266,9 +267,9 @@ Fragility::read(QList<QByteArray> inputData, QJsonObject jsonObject)
             for (int j=0; j<weightsList.size(); j++) {
                 weightL[j]=weightsList.at(j).toDouble();
             }
+             weightLengths[2] = weightsList.size();
         }
     }
-
 
     if (!inputData[18].isEmpty()) {
         families.append(QString(inputData[18]));
@@ -283,6 +284,7 @@ Fragility::read(QList<QByteArray> inputData, QJsonObject jsonObject)
             for (int j=0; j<weightsList.size(); j++) {
                 weightL[j]=weightsList.at(j).toDouble();
             }
+             weightLengths[3] = weightsList.size();
         }
     }
 
@@ -312,44 +314,37 @@ Fragility::parseDescription(QJsonObject &jsonObj,
     if (jsonObj.contains("Description")) {
         description = jsonObj["Description"].toString();
     } else {
-        qDebug() << "No description in json object with key Description" << jsonObj;
-        return -1;
+        // qDebug() << "No description in json object with key Description" << jsonObj;
+        //return -1;
     }
 
     if (jsonObj.contains("Comments")) {
         comments = jsonObj["Comments"].toString();
     } else {
-        qDebug() << "No description in json object with key Comments";
-        return -1;
+        // qDebug() << "No description in json object with key Comments";
+        //return -1;
     }
 
     if (jsonObj.contains("SuggestedComponentBlockSize")) {
         blockSize = jsonObj["SuggestedComponentBlockSize"].toString();
     } else {
-        qDebug() << "No description in json object with key SuggestedComponentBlockSize";
-        return -1;
+        // qDebug() << "No description in json object with key SuggestedComponentBlockSize";
+        //return -1;
     }
 
     if (jsonObj.contains("RoundUpToIntegerQuantity")) {
         roundToInt = jsonObj["RoundUpToIntegerQuantity"].toBool();
     } else {
-        qDebug() << "No description in json object with key RoundToIntegerQuantity";
-        return -1;
+        //qDebug() << "No description in json object with key RoundToIntegerQuantity";
+        //return -1;
     }            
-    
-    if (jsonObj.contains("Comments")) {
-        comments = jsonObj["Comments"].toString();
-    } else {
-        qDebug() << "No description in json object with key Comments";
-        return -1;
-    }    
-
 
     if (jsonObj.contains("LimitStates")) {
         QJsonObject limitStatesObj = jsonObj["LimitStates"].toObject();
         int numLS = 0;
         // loop over all limit states in object; create new LimitState and append to fragility
         QStringList keysLS = limitStatesObj.keys();
+
         foreach (const QString &keyLS, keysLS) {
 
             LimitState *newLS = new LimitState;
@@ -386,9 +381,47 @@ Fragility::parseDescription(QJsonObject &jsonObj,
             limitStates.append(newLS);
             numLS++;
         }
+
     } else {
-        qDebug() << "No description in json object with key: LimitStates ";
-        return -1;
+        // qDebug() << "No description in json object with key: LimitStates " << id << " " << families;
+        int numLS = 0;
+        foreach (const QString &family, families) {
+
+            LimitState *newLS = new LimitState;
+            newLS->name=QString("LS") + QString::number(numLS+1);
+            newLS->theta0 = theta0[numLS];
+            newLS->theta1 = theta1[numLS];
+            newLS->curveDistribution = family;
+
+            // loop over all damage states, create new damage state and append to limit state
+            int numDS = 0;
+
+            if (weightLengths[numLS] == 0) {
+
+                DamageState *newDS = new DamageState(newLS);
+                newDS->name = QString("LS1");
+                newDS->weight = 1.0;
+                newLS->damageStates.append(newDS);
+
+            } else {
+
+                for (int i=0; i<weightLengths[numLS]; i++) {
+
+                    DamageState *newDS = new DamageState(newLS);
+                    // QJsonObject damageState = limitStateObj[keyDS].toObject();
+                    newDS->name = QString("LS") + QString::number(numDS+1);
+                    newDS->limitState = newLS;
+                    newDS->weight = weights[numLS][numDS];
+
+                    newLS->damageStates.append(newDS);
+                    numDS++;
+                }
+            }
+            // append new limit state
+            limitStates.append(newLS);
+            numLS++;
+        }
+
     }
 }
 

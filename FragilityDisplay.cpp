@@ -180,6 +180,7 @@ FragilityDisplay::display(Fragility *theFragility) {
 
         theLimitStates->insertRow(numLS);
         lsList.append(lsItem);
+	
 
         QTableWidgetItem *name = new QTableWidgetItem;
         name->setText(lsItem->name);
@@ -203,12 +204,23 @@ FragilityDisplay::display(Fragility *theFragility) {
 
         // plot limitState
         double la=0, ze=0, me=0, st=0;
-        la=lsItem->theta0;
-        ze=lsItem->theta1;
+		
         if (la != NAN && ze != NAN) {
 
-            st = sqrt(exp(2*log(la)+pow(ze,2))*(exp(pow(ze,2))-1));
+            if (lsItem->curveDistribution == "lognormal") {
+                me = lsItem->theta0;
+                st = me*lsItem->theta1;
+                la = log(pow(me,2)/sqrt(pow(st,2)+pow(me,2)));
+                ze = sqrt(log(pow(st/me,2)+1));
 
+            } else if ( lsItem->curveDistribution == "normal") {
+
+                me = lsItem->theta0;
+                st = me*lsItem->theta1;
+
+            }
+            //st = sqrt(exp(2*log(la)+pow(ze,2))*(exp(pow(ze,2))-1));
+            //me = exp(la+(pow(ze,2)/2));
             if (st > 0.0) {
                 double min = me - 5*st; // defined in x>0
                 if (min < 0)
@@ -221,13 +233,20 @@ FragilityDisplay::display(Fragility *theFragility) {
                 for (int i=0; i<500; i++) {
                     double xi = min + i*(max-min)/499;
                     x[i] = xi;
-                    if (i != 0) y[i] = 1.0/(xi*ze*sqrt(2*3.141592))*exp( - pow((log(xi)-log(la))/ze,2)/2);
-                    // y[i] = sum;
+
+                    if (i != 0) {
+                        if (lsItem->curveDistribution == "lognormal")
+                            y[i] = 1.0/(xi*ze*sqrt(2*3.141592))*exp( - pow((log(xi)-la)/ze,2)/2);
+                        else if (lsItem->curveDistribution == "normal")
+                            y[i] =1.0/(sqrt(2*3.1415926535)*st)*exp(-(0.5*(xi-me)*(xi-me)/(st*st)));
+                        sum+=y[i];
+                    }
                 }
                 /*
                for (int i=0; i<500; i++)
                   y[i] = y[i]/sum;
                */
+
                 thePlot->addLine(x,y,2, colors[3*numLS], colors[3*numLS+1], colors[3*numLS+2], lsItem->name);
                 qDebug() << colors[3*numLS] << " " << colors[3*numLS+1] << " " << colors[3*numLS+2];
             }
@@ -235,8 +254,7 @@ FragilityDisplay::display(Fragility *theFragility) {
 
         numLS++;
     }
-    //theLimitStates->setCurrentCell(0,0);
-    //theLimitStates->cellPressed(0,0);
+
     theLimitStates->selectRow(0);
 }
 

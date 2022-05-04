@@ -65,7 +65,7 @@ public slots:
     bool inputFromJSON(QJsonObject &jsonObject);
 
 private:
-    void createInterface(void);
+    void createInterface(QVector<int>breakPoints);
 
     void parseSimCenter(QString fileName);
     QTreeWidgetItem * addRoot(QString name, QString description);
@@ -75,6 +75,7 @@ private:
     QTreeWidget *theTree;
     FragilityDisplay *theDisplay;
     QList<Fragility *> theFragilities;
+    QString breakPointsString;
 };
 
 #endif
