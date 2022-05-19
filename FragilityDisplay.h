@@ -64,7 +64,7 @@ public:
     int display(Fragility *theFragility);
 
 public slots:
-    void lsTableRowClicked(int row, int column);  
+    void lsLimitStateTableRowClicked(int row, int column);
 
 private:
     QLineEdit *index;

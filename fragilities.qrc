@@ -1,5 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file>standardFragilities/FEMA_P58.json</file>
+  <file>standardFragilities/femaP58.json</file>
+  <file>standardFragilities/hazusEQ.json</file>
+  <file>standardFragilities/hazusHW.json</file>  
 </qresource>
 </RCC>

@@ -67,6 +67,7 @@ FragilityDisplay::FragilityDisplay(QWidget *parent)
 
     QHBoxLayout *topLayout = new QHBoxLayout();
     index = new QLineEdit();
+    index->setReadOnly(true);
     blockSize = new QLineEdit();
     complete = new QLineEdit();
     complete->setStyleSheet("color: red;");
@@ -83,6 +84,7 @@ FragilityDisplay::FragilityDisplay(QWidget *parent)
     //theLayout->addWidget(complete,0,2);
     
     description = new QTextEdit();
+
 
     theLayout->addWidget(description, 1,0, 1, 3);
 
@@ -131,7 +133,7 @@ FragilityDisplay::FragilityDisplay(QWidget *parent)
 
     this->setLayout(theLayout);
 
-    connect(theLimitStates, SIGNAL(cellPressed(int, int)), this, SLOT(lsTableRowClicked(int, int)));
+    connect(theLimitStates, SIGNAL(cellPressed(int, int)), this, SLOT(lsLimitStateTableRowClicked(int, int)));
 }
 
 
@@ -286,7 +288,7 @@ FragilityDisplay::display(Fragility *theFragility) {
 
 
 void
-FragilityDisplay::lsTableRowClicked(int row, int column)
+FragilityDisplay::lsLimitStateTableRowClicked(int row, int column)
 {
 
     theDamageStates->clear();

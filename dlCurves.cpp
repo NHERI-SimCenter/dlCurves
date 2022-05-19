@@ -72,8 +72,9 @@ dlCurves::dlCurves(QWidget *parent)
 
     theFragilitySelectionLayout->addWidget(new QLabel("Source"),0,0);
     QComboBox *fragilitySource = new QComboBox();
-    fragilitySource->addItem("P58");
-    fragilitySource->addItem("Hazus");
+    fragilitySource->addItem("Earthquake P58");
+    fragilitySource->addItem("Earthquake HAZUS");
+    fragilitySource->addItem("Hurricane HAZUS");    
     fragilitySource->addItem("User Provided");
     connect(fragilitySource, SIGNAL(currentIndexChanged(QString)),
             this, SLOT(curvesChanged(QString)));
@@ -109,7 +110,7 @@ dlCurves::dlCurves(QWidget *parent)
     theLayout->addWidget(theFragilityBox, 0,1);
 
     this->setLayout(theLayout);
-    this->curvesChanged("P58");
+    this->curvesChanged("Earthquake P58");
 }
 
 bool
@@ -522,11 +523,9 @@ dlCurves::fragilityClicked(QTreeWidgetItem *current, int column) {
 void
 dlCurves::curvesChanged(QString source) {
 
-    if (source == "P58") {
+    if (source == "Earthquake P58") {
 
-        // FMK - put this in a method!
-
-        QFile file(":/standardFragilities/FEMA_P58.json");
+        QFile file(":/standardFragilities/femaP58.json");
         if (!file.open(QFile::ReadOnly | QFile::Text)) {
             qDebug() << "dlCurves - could not open FEMA_P58";
             return;
@@ -549,7 +548,59 @@ dlCurves::curvesChanged(QString source) {
         //
 
         bool result = this->inputFromJSON(jsonObj);
+    }  else if (source == "Earthquake HAZUS") {
+      
+        QFile file(":/standardFragilities/hazusEQ.json");
+        if (!file.open(QFile::ReadOnly | QFile::Text)) {
+            qDebug() << "dlCurves - could not open HAZUS_EQ";
+            return;
+        }
 
+        //
+        // place contents of file into json object
+        //
+
+        QString val;
+        val=file.readAll();
+        QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
+        QJsonObject jsonObj = doc.object();
+
+        // close file
+        file.close();
+
+        //
+        // clear current and input from new JSON
+        //
+
+        bool result = this->inputFromJSON(jsonObj);	
+
+
+    }  else if (source == "Hurricane HAZUS") {
+      
+        QFile file(":/standardFragilities/hazusHW.json");
+        if (!file.open(QFile::ReadOnly | QFile::Text)) {
+            qDebug() << "dlCurves - could not open HAZUS_HU";
+            return;
+        }
+
+        //
+        // place contents of file into json object
+        //
+
+        QString val;
+        val=file.readAll();
+        QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
+        QJsonObject jsonObj = doc.object();
+
+        // close file
+        file.close();
+
+        //
+        // clear current and input from new JSON
+        //
+
+        bool result = this->inputFromJSON(jsonObj);	
+	
 
     } else if (source == "User Provided") {
 
