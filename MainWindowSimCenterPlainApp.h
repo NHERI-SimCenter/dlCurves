@@ -44,7 +44,6 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class SimCenterWidget;
 class QLabel;
 class QLineEdit;
-//class PythonProgressDialog;
 
 class MainWindowSimCenterPlainApp : public QMainWindow
 {
@@ -122,7 +121,6 @@ private:
 
     //  QDockWidget* statusDockWidget;
     SimCenterWidget *inputWidget;
-    //    PythonProgressDialog* statusWidget;
 };
 
 #endif // MAIN_WINDOW_SIMCENTER_PLAIN_APP_H

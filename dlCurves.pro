@@ -20,7 +20,7 @@ SOURCES       = dlCurves.cpp \
                 $$COMMON/SimCenterWidget.cpp \
                    $$COMMON/FooterWidget.cpp \
                 $$COMMON/HeaderWidget.cpp \                                      
-                   $$COMMON/Utils/PythonProgressDialog.cpp \
+                   $$COMMON/Utils/ProgramOutputDialog.cpp \
                 $$COMMON/Utils/dialogabout.cpp \                                      
                 main.cpp
                 
@@ -35,7 +35,7 @@ HEADERS       = dlCurves.h \
                 $$COMMON/SimCenterWidget.h \
                    $$COMMON/FooterWidget.h \
                 $$COMMON/HeaderWidget.h \                                                         
-                   $$COMMON/Utils/PythonProgressDialog.h \
+                   $$COMMON/Utils/ProgramOutputDialog.h \
                 $$COMMON/Utils/dialogabout.h \                   
                 Fragility.h
   
